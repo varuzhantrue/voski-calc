@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoskiCalc</title>
+    <!-- Link to the Web App Manifest (for home screen icon and display settings) -->
+    <link rel="manifest" href="/manifest.json">
+    <!-- Tailwind CSS CDN for easy styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font for a clean look */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+        }
+        /* Style for input fields to ensure consistent appearance */
+        input[type="number"] {
+            -moz-appearance: textfield; /* Firefox specific */
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none; /* Chrome, Safari, Edge */
+            margin: 0; /* Remove extra space */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Զարդի Գնի Հաշվիչ</h1>
+
+        <div class="mb-4">
+            <label for="pureGoldPrice" class="block text-gray-700 text-sm font-semibold mb-2">
+                Մաքուր ոսկու գինը 1գր ($)
+            </label>
+            <input
+                type="number"
+                id="pureGoldPrice"
+                value="100" placeholder="e.g., 100"
+                class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out"
+                aria-label="Pure Gold Price"
+                min="0"
+                step="0.01"
+            >
+        </div>
+
+        <div class="mb-4">
+            <label for="jewelerSalary" class="block text-gray-700 text-sm font-semibold mb-2">
+                Աշխատանք ($)
+            </label>
+            <input
+                type="number"
+                id="jewelerSalary"
+                value="8" placeholder="e.g., 8"
+                class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out"
+                aria-label="Jeweler Salary"
+                min="0"
+                step="0.01"
+            >
+        </div>
+
+        <div class="mb-6">
+            <label for="itemWeight" class="block text-gray-700 text-sm font-semibold mb-2">
+                Զարդի քաշը (գրամ)
+            </label>
+            <input
+                type="number"
+                id="itemWeight"
+                value="1" placeholder="e.g., 1"
+                class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out"
+                aria-label="Item Weight"
+                min="0.01"
+                step="0.01"
+            >
+        </div>
+
+        <div class="mb-6">
+            <label for="usdToAmdRate" class="block text-gray-700 text-sm font-semibold mb-2">
+                Դոլարի փոխարժեքը (1 USD = ? AMD)
+            </label>
+            <input
+                type="number"
+                id="usdToAmdRate"
+                value="400" placeholder="e.g., 400"
+                class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out"
+                aria-label="USD to AMD Conversion Rate"
+                min="0.01"
+                step="0.01"
+            >
+        </div>
+
+        <button
+            id="calculateBtn"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200 ease-in-out transform hover:scale-105 shadow-md"
+            aria-label="Calculate Price"
+        >
+            Հաշվել
+        </button>
+
+        <div id="resultContainer" class="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200 text-center hidden">
+            <p class="text-lg font-semibold text-blue-800">Գինը (USD):</p>
+            <p id="finalPriceUSD" class="text-4xl font-extrabold text-blue-900 mt-2">0.00 $</p>
+        </div>
+
+        <div id="resultContainerAMD" class="mt-4 p-4 bg-green-50 rounded-lg border border-green-200 text-center hidden">
+            <p class="text-lg font-semibold text-green-800">Գինը (AMD):</p>
+            <p id="finalPriceAMD" class="text-4xl font-extrabold text-green-900 mt-2">0.00 ֏</p>
+        </div>
+
+        <div id="messageBox" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+                <p id="messageText" class="text-gray-800 text-lg mb-4"></p>
+                <button id="closeMessageBox" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Register the Service Worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+
+        // Get references to HTML elements
+        const pureGoldPriceInput = document.getElementById('pureGoldPrice');
+        const jewelerSalaryInput = document.getElementById('jewelerSalary');
+        const itemWeightInput = document.getElementById('itemWeight');
+        const usdToAmdRateInput = document.getElementById('usdToAmdRate');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resultContainerUSD = document.getElementById('resultContainer');
+        const finalPriceUSDDisplay = document.getElementById('finalPriceUSD');
+        const resultContainerAMD = document.getElementById('resultContainerAMD');
+        const finalPriceAMDDisplay = document.getElementById('finalPriceAMD');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const closeMessageBoxBtn = document.getElementById('closeMessageBox');
+
+        // Define the coefficient for 585 purity gold
+        const PURITY_COEFFICIENT = 1.7;
+
+        // --- Persistence Logic using localStorage ---
+
+        /**
+         * Saves the current input values to localStorage.
+         */
+        function saveState() {
+            localStorage.setItem('pureGoldPrice', pureGoldPriceInput.value);
+            localStorage.setItem('jewelerSalary', jewelerSalaryInput.value);
+            localStorage.setItem('itemWeight', itemWeightInput.value);
+            localStorage.setItem('usdToAmdRate', usdToAmdRateInput.value);
+        }
+
+        /**
+         * Loads saved input values from localStorage on page load.
+         */
+        function loadState() {
+            const savedPureGoldPrice = localStorage.getItem('pureGoldPrice');
+            const savedJewelerSalary = localStorage.getItem('jewelerSalary');
+            const savedItemWeight = localStorage.getItem('itemWeight');
+            const savedUsdToAmdRate = localStorage.getItem('usdToAmdRate');
+
+            if (savedPureGoldPrice !== null) {
+                pureGoldPriceInput.value = savedPureGoldPrice;
+            }
+            if (savedJewelerSalary !== null) {
+                jewelerSalaryInput.value = savedJewelerSalary;
+            }
+            if (savedItemWeight !== null) {
+                itemWeightInput.value = savedItemWeight;
+            }
+            if (savedUsdToAmdRate !== null) {
+                usdToAmdRateInput.value = savedUsdToAmdRate;
+            }
+        }
+
+        // Call loadState when the page loads to restore previous values
+        document.addEventListener('DOMContentLoaded', loadState);
+
+        // --- End Persistence Logic ---
+
+        /**
+         * Displays a custom message box instead of using alert().
+         * @param {string} message - The message to display.
+         */
+        function showMessageBox(message) {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+        }
+
+        // Event listener for the calculate button
+        calculateBtn.addEventListener('click', () => {
+            // Get values from input fields and convert them to numbers
+            const pureGoldPrice = parseFloat(pureGoldPriceInput.value);
+            const jewelerSalary = parseFloat(jewelerSalaryInput.value);
+            const itemWeight = parseFloat(itemWeightInput.value);
+            const usdToAmdRate = parseFloat(usdToAmdRateInput.value);
+
+            // Validate inputs
+            if (isNaN(pureGoldPrice) || pureGoldPrice <= 0) {
+                showMessageBox("Մուտքագրեք ճշմարիտ արժեք 'Մաքուր ոսկու գինը' դաշտում։");
+                return;
+            }
+            if (isNaN(jewelerSalary) || jewelerSalary < 0) {
+                showMessageBox("Մուտքագրեք ճշմարիտ արժեք 'Աշխատանք' դաշտում։");
+                return;
+            }
+            if (isNaN(itemWeight) || itemWeight <= 0) {
+                showMessageBox("Մուտքագրեք ճշմարիտ արժեք 'Զարդի քաշը' դաշտում։");
+                return;
+            }
+            if (isNaN(usdToAmdRate) || usdToAmdRate <= 0) {
+                showMessageBox("Մուտքագրեք ճշմարիտ արժեք 'Դոլարի փոխարժեքը' դաշտում։");
+                return;
+            }
+
+            // Perform the calculation using the provided formula: ((A / 1.7) + B) * C
+            const pricePerGram585 = pureGoldPrice / PURITY_COEFFICIENT;
+            const totalCostPerGram = pricePerGram585 + jewelerSalary;
+            const finalPriceUSD = totalCostPerGram * itemWeight;
+
+            // Calculate final price in AMD
+            const finalPriceAMD = finalPriceUSD * usdToAmdRate;
+
+            // Display the results, formatted to two decimal places, with currency symbol AFTER the number
+            finalPriceUSDDisplay.textContent = `${finalPriceUSD.toFixed(2)} $`;
+            finalPriceAMDDisplay.textContent = `${finalPriceAMD.toFixed(2)} ֏`;
+
+            resultContainerUSD.classList.remove('hidden'); // Show the USD result container
+            resultContainerAMD.classList.remove('hidden'); // Show the AMD result container
+
+            // Save state after a successful calculation
+            saveState();
+        });
+
+        // Event listener to close the custom message box
+        closeMessageBoxBtn.addEventListener('click', () => {
+            messageBox.classList.add('hidden');
+        });
+
+        // Add event listeners to input fields to save state immediately on change
+        // This ensures the state is saved even if the user doesn't click "Calculate"
+        pureGoldPriceInput.addEventListener('input', saveState);
+        jewelerSalaryInput.addEventListener('input', saveState);
+        itemWeightInput.addEventListener('input', saveState);
+        usdToAmdRateInput.addEventListener('input', saveState);
+
+        // Also add event listeners to input fields to re-calculate on 'Enter' key press
+        pureGoldPriceInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') calculateBtn.click();
+        });
+        jewelerSalaryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') calculateBtn.click();
+        });
+        itemWeightInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') calculateBtn.click();
+        });
+        usdToAmdRateInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') calculateBtn.click();
+        });
+    </script>
+</body>
+</html>
