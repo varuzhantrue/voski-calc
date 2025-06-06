@@ -4,8 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VoskiCalc</title>
-    <!-- Link to the Web App Manifest (for home screen icon and display settings) -->
-    <link rel="manifest" href="/manifest.json">
+    <!-- Standard Web App Manifest -->
+    <link rel="manifest" href="./manifest.json">
+
+    <!-- Apple-specific PWA Meta Tags for iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VoskiCalc">
+    <!-- Replace with paths to your actual Apple touch icons -->
+    <!-- For best results, generate icons in various sizes and link them here.
+         Using 180x180 as a common standard for retina displays. -->
+    <link rel="apple-touch-icon" href="./app-icon-180.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="./app-icon-152.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="./app-icon-167.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./app-icon-180.png">
+
+
     <!-- Tailwind CSS CDN for easy styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -121,7 +135,8 @@
         // Register the Service Worker for PWA functionality
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
+                // Changed from '/service-worker.js' to './service-worker.js' for GitHub Pages compatibility
+                navigator.serviceWorker.register('./service-worker.js')
                     .then(registration => {
                         console.log('Service Worker registered with scope:', registration.scope);
                     })

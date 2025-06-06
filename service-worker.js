@@ -1,15 +1,17 @@
 // IMPORTANT: Increment this cache name whenever you make changes to your app's files
-const CACHE_NAME = 'jewelry-calculator-v2'; // Changed from v1 to v2
+const CACHE_NAME = 'jewelry-calculator-v3'; // Changed from v2 to v3
 const urlsToCache = [
-    '/', // Caches the root URL
-    '/index.html', // Caches the main HTML file
-    '/manifest.json', // Caches the manifest file
-    '/service-worker.js', // Caches the service worker itself
-    'https://cdn.tailwindcss.com' // Cache Tailwind CSS CDN
-    // If you have custom icon files (e.g., app-icon-192.png, app-icon-512.png),
-    // make sure to add their relative paths here as well:
-    // '/app-icon-192.png',
-    // '/app-icon-512.png'
+    './', // Caches the root URL relative to the current context (your-repo-name/)
+    './index.html', // Caches the main HTML file
+    './manifest.json', // Caches the manifest file
+    './service-worker.js', // Caches the service worker itself
+    'https://cdn.tailwindcss.com', // Cache Tailwind CSS CDN
+    // Ensure you add your custom icon files here as well with './' prefix
+    './app-icon-192.png',
+    './app-icon-512.png',
+    './app-icon-180.png',
+    './app-icon-152.png',
+    './app-icon-167.png'
 ];
 
 // Install event: caches the necessary files
