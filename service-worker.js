@@ -1,12 +1,11 @@
 // IMPORTANT: Increment this cache name whenever you make changes to your app's files
-const CACHE_NAME = 'jewelry-calculator-v3'; // Changed from v2 to v3
+const CACHE_NAME = 'jewelry-calculator-v3';
 const urlsToCache = [
-    './', // Caches the root URL relative to the current context (your-repo-name/)
+    './', // Caches the root URL relative to the current context (repo-name/)
     './index.html', // Caches the main HTML file
     './manifest.json', // Caches the manifest file
     './service-worker.js', // Caches the service worker itself
     'https://cdn.tailwindcss.com', // Cache Tailwind CSS CDN
-    // Ensure you add your custom icon files here as well with './' prefix
     './app-icon-192.png',
     './app-icon-512.png',
     './app-icon-180.png',
@@ -66,7 +65,6 @@ self.addEventListener('fetch', event => {
                 console.log('Service Worker: Fetching from network:', event.request.url);
                 return fetch(event.request).catch(error => {
                     console.error('Service Worker: Fetch failed for:', event.request.url, error);
-                    // You could return an offline page here if desired
                 });
             })
     );

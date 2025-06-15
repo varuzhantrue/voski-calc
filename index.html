@@ -11,9 +11,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="VoskiCalc">
-    <!-- Replace with paths to your actual Apple touch icons -->
-    <!-- For best results, generate icons in various sizes and link them here.
-         Using 180x180 as a common standard for retina displays. -->
     <link rel="apple-touch-icon" href="./app-icon-180.png">
     <link rel="apple-touch-icon" sizes="152x152" href="./app-icon-152.png">
     <link rel="apple-touch-icon" sizes="167x167" href="./app-icon-167.png">
@@ -42,6 +39,22 @@
 <body class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Զարդի Գնի Հաշվիչ</h1>
+
+        <div class="mb-6">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">
+                Զարդի հարգը
+            </label>
+            <div class="flex space-x-4">
+                <label class="inline-flex items-center">
+                    <input type="radio" name="goldPurity" value="585" checked class="form-radio h-5 w-5 text-blue-600" aria-label="585 Purity">
+                    <span class="ml-2 text-gray-700">585</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="radio" name="goldPurity" value="750" class="form-radio h-5 w-5 text-blue-600" aria-label="750 Purity">
+                    <span class="ml-2 text-gray-700">750</span>
+                </label>
+            </div>
+        </div>
 
         <div class="mb-4">
             <label for="pureGoldPrice" class="block text-gray-700 text-sm font-semibold mb-2">
@@ -135,7 +148,6 @@
         // Register the Service Worker for PWA functionality
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Changed from '/service-worker.js' to './service-worker.js' for GitHub Pages compatibility
                 navigator.serviceWorker.register('./service-worker.js')
                     .then(registration => {
                         console.log('Service Worker registered with scope:', registration.scope);
@@ -159,9 +171,13 @@
         const messageBox = document.getElementById('messageBox');
         const messageText = document.getElementById('messageText');
         const closeMessageBoxBtn = document.getElementById('closeMessageBox');
+        const purityRadios = document.querySelectorAll('input[name="goldPurity"]');
+        const purity585Radio = document.querySelector('input[value="585"]');
+        const purity750Radio = document.querySelector('input[value="750"]');
 
-        // Define the coefficient for 585 purity gold
-        const PURITY_COEFFICIENT = 1.7;
+        // Define purity coefficients as constants for clarity
+        const PURITY_COEFFICIENT_585 = 1.7;
+        const PURITY_COEFFICIENT_750 = 1.33;
 
         // --- Persistence Logic using localStorage ---
 
@@ -173,6 +189,8 @@
             localStorage.setItem('jewelerSalary', jewelerSalaryInput.value);
             localStorage.setItem('itemWeight', itemWeightInput.value);
             localStorage.setItem('usdToAmdRate', usdToAmdRateInput.value);
+            const selectedPurity = document.querySelector('input[name="goldPurity"]:checked').value;
+            localStorage.setItem('selectedGoldPurity', selectedPurity);
         }
 
         /**
@@ -195,6 +213,9 @@
             }
             if (savedUsdToAmdRate !== null) {
                 usdToAmdRateInput.value = savedUsdToAmdRate;
+            }
+            if (savedSelectedPurity !== null) {
+                document.querySelector(`input[name="goldPurity"][value="${savedSelectedPurity}"]`).checked = true;
             }
         }
 
@@ -220,6 +241,18 @@
             const itemWeight = parseFloat(itemWeightInput.value);
             const usdToAmdRate = parseFloat(usdToAmdRateInput.value);
 
+            // Get selected purity
+            const selectedPurity = document.querySelector('input[name="goldPurity"]:checked').value;
+            let purityCoefficient;
+            if (selectedPurity === '585') {
+                purityCoefficient = PURITY_COEFFICIENT_585;
+            } else if (selectedPurity === '750') {
+                purityCoefficient = PURITY_COEFFICIENT_750;
+            } else {
+                showMessageBox("Ոսկու հարգը սխալ է ընտրված։");
+                return;
+            }
+
             // Validate inputs
             if (isNaN(pureGoldPrice) || pureGoldPrice <= 0) {
                 showMessageBox("Մուտքագրեք ճշմարիտ արժեք 'Մաքուր ոսկու գինը' դաշտում։");
@@ -238,9 +271,9 @@
                 return;
             }
 
-            // Perform the calculation using the provided formula: ((A / 1.7) + B) * C
-            const pricePerGram585 = pureGoldPrice / PURITY_COEFFICIENT;
-            const totalCostPerGram = pricePerGram585 + jewelerSalary;
+            // Perform the calculation using the provided formula: ((A / purityCoefficient) + B) * C
+            const pricePerGram = pureGoldPrice / purityCoefficient;
+            const totalCostPerGram = pricePerGram + jewelerSalary;
             const finalPriceUSD = totalCostPerGram * itemWeight;
 
             // Calculate final price in AMD
@@ -268,6 +301,14 @@
         jewelerSalaryInput.addEventListener('input', saveState);
         itemWeightInput.addEventListener('input', saveState);
         usdToAmdRateInput.addEventListener('input', saveState);
+
+        // Add event listeners for purity radio buttons to save state and re-calculate on change
+        purityRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                saveState(); // Save the new purity selection
+                calculateBtn.click(); // Trigger recalculation with the new purity
+            });
+        });
 
         // Also add event listeners to input fields to re-calculate on 'Enter' key press
         pureGoldPriceInput.addEventListener('keypress', (e) => {
